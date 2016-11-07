@@ -67,6 +67,8 @@
           (define y-pos (posn-y (worm-pos w))))
     (make-worm (worm-size w) (make-posn x-pos y-pos) key)))
 
+;; worm-game: X -> Worm
+;; worm-game: Worm: a game based on the game Snake
 (define (worm-game x)
   (big-bang (make-worm 1 (make-posn (/ HEIGHT 2) (/ WIDTH 2)) "right")
             [to-draw render]
