@@ -1,0 +1,85 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-abbr-reader.ss" "lang")((modname |Week 5 Set B|) (read-case-sensitive #t) (teachpacks ((lib "universe.rkt" "teachpack" "2htdp") (lib "image.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "universe.rkt" "teachpack" "2htdp") (lib "image.rkt" "teachpack" "2htdp")) #f)))
+;; Andrew Alcala:  alcala.a@husky.neu.edu
+;; Rehab Asif   :  asif.r@husky.neu.edu
+;;------------------------------------------------------------------------------
+;; Exercise 3
+;;------------------------------------------------------------------------------
+;; a List-of strings is one of:
+;; - '()
+;; - (cons String List-of-strings)
+;; INTERPRETATION:
+;; a String is any String
+
+(define test1 (list "hello" "goodbye" "xyz" "s" ""))
+(define test2 (list "" "goodbye" "2938" "@#%$^ " ""))
+
+;; List-of-strings -> List-of-strings
+;; lasts*: Extracts the last 1Strings from each of the
+;;         strings on the given list and forms a list from those.
+;;         >If one of these strings is "", lasts* adds "-"
+;;         to the result list.
+(define (lasts* los)
+  (cond
+    [(empty? los) '()]
+    [else (cons (get1s (first los)) (lasts* (rest los)))]))
+
+(check-expect (lasts* test1) (list "o" "e" "z" "s" "-"))
+(check-expect (lasts* test2) (list "-" "e" "8" " " "-"))
+
+;; String -> String
+;; get1s: Consumes a string and returns its last 1String
+;;        >If the string is blank, returns "-"
+(define (get1s str)
+  (cond
+    [(= (string-length str) 0) "-"]
+    [else (substring str
+                (-(string-length str) 1)
+                (string-length str))]))
+  
+(check-expect (get1s "abc") "c")
+(check-expect (get1s "a") "a")
+(check-expect (get1s "") "-")
+
+;;------------------------------------------------------------------------------
+;; Exercise 4
+;;------------------------------------------------------------------------------
+;; A Cmd is one of: 
+;; – String 
+;; – (cons "-" (cons String '()))
+;; – (cons "+" (cons String '()))
+;; – (cons "&" (cons String '()))
+;; INTERPRETATION:
+;; The message are instructions to the chat server:
+;; – (cons "-" (cons n '())) means block n from 
+;;    sending messages to this client
+;; – (cons "+" (cons n '())) means allow n to 
+;;    send URL messages
+;; – (cons "&" (cons u '())) means u is a URL to 
+;;    a PNG image
+
+
+;; String -> Cmd
+;; command: Consumes a string and produces a Cmd.
+;;          >If the string starts with "-", "&", or "+", the result is a
+;;           list whose first item is this 1String and whose second item
+;;           is the remainder of the given String.
+;;          >In all other cases, command returns the given string.
+
+(define (command str)
+  (cond
+    [(string=? "-" (substring str 0 1))
+     (list "-" (substring str 1 (string-length str)))]
+    [(string=? "+" (substring str 0 1))
+     (list "+" (substring str 1 (string-length str)))]
+    [(string=? "&" (substring str 0 1))
+     (list "&" (substring str 1 (string-length str)))]
+    [else str]))
+    
+(check-expect (command "-Matthias") (list "-" "Matthias"))
+(check-expect (command "+Amal") (list "+" "Amal"))
+(check-expect
+ (command "&https://assets.pokemon.com/static2/_ui/img/account/sign-up.png")
+ (list "&" "https://assets.pokemon.com/static2/_ui/img/account/sign-up.png"))
+;;------------------------------------------------------------------------------

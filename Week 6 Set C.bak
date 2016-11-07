@@ -1,0 +1,118 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-advanced-reader.ss" "lang")((modname |Week 6 Set C|) (read-case-sensitive #t) (teachpacks ((lib "universe.rkt" "teachpack" "2htdp") (lib "image.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #t #t none #f ((lib "universe.rkt" "teachpack" "2htdp") (lib "image.rkt" "teachpack" "2htdp")) #f)))
+;; Andrew Alcala: alcala.a@husky.neu.edu
+
+;;------------------------------------------------------------------------------
+;; Data Definitions
+;;------------------------------------------------------------------------------
+
+;; A SimulationState is a structure: 
+;; (make-fs FSM FSM-State)
+   (define-struct fs [fsm current])
+;; INTERPRETATION: fsm is an FSM.
+;;                 current is the current FSM-State.
+
+
+;; A Transition is a structure:
+;; (make-transition FSM-State FSM-State)
+   (define-struct transition [current next])
+;; INTERPRETATION: current is the current FSM-State.
+;;                 next is what will be the next FSM-State.
+
+;; FSM-State is a Color.
+
+;; A Color is one of:
+;; — "white"
+;; — "yellow"
+;; — "orange"
+;; — "green"
+;; — "red"
+;; — "blue"
+;; — "black"
+;; — ...
+;; Note: DrRacket recognizes many more strings as colors.
+
+;; A FSM is one of:
+;;   – '()
+;;   – (cons Transition FSM)
+
+;; INTERPRETATION: A FSM represents the transitions that a finite
+;;                 state machine  can take from one state to another
+;;                 in reaction to key strokes.
+
+(define fsm-traffic
+  (list (make-transition "red" "green")
+        (make-transition "green" "yellow")
+        (make-transition "yellow" "red")))
+
+;;------------------------------------------------------------------------------
+;; Functions
+;;------------------------------------------------------------------------------
+;; Exercise 227
+
+;; FSM FSM-State -> SimulationState 
+;; match the keys pressed with the given FSM 
+(define (simulate a-fsm s0)
+  (big-bang (make-fs a-fsm s0)
+    [to-draw state-as-colored-square]
+    [on-key find-next-state]))
+
+
+;; SimulationState -> Image 
+;; renders current world state as a colored square 
+ 
+(define (state-as-colored-square a-fs)
+  (square 100 "solid" (fs-current a-fs)))
+
+(check-expect (state-as-colored-square
+                (make-fs fsm-traffic "red"))
+              (square 100 "solid" "red"))
+
+;; SimulationState KeyEvent -> SimulationState
+;; finds the next state from ke and cs
+
+(define (find-next-state a-fs ke)
+  (make-fs
+    (fs-fsm a-fs)
+    (find (fs-fsm a-fs) (fs-current a-fs))))
+
+(check-expect
+  (find-next-state (make-fs fsm-traffic "red") "n")
+  (make-fs fsm-traffic "green"))
+(check-expect
+  (find-next-state (make-fs fsm-traffic "red") "a")
+  (make-fs fsm-traffic "green"))
+(check-expect
+  (find-next-state (make-fs fsm-traffic "green") "q")
+  (make-fs fsm-traffic "yellow"))
+
+
+;; FSM FSM-State -> FSM-State
+;; finds the state matching current in the table
+ 
+(define (find transitions current)
+  (cond
+    [(empty? transitions) (error "not found: " current)]
+    [(state=? current (transition-current (first transitions)))
+     (transition-next (first transitions))]
+    [else (find (rest transitions) current)]))
+
+(check-expect (find fsm-traffic "red") "green")
+(check-expect (find fsm-traffic "green") "yellow")
+(check-error (find fsm-traffic "black")
+             "not found: black")
+;;------------------------------------------------------------------------------
+;; Exercise 226
+
+;; state?: FSM-State FSM-State -> Boolean
+;; state?: Check whether two given FSM-States are the same
+
+(define (state=? s1 s2)
+  (cond
+    [(string=? s1 s2) #true]
+    [else #false]))
+
+(check-expect (state=? "red" "red") #true)
+(check-expect (state=? "green" "red") #false)
+;;------------------------------------------------------------------------------
