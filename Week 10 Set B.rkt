@@ -31,13 +31,7 @@
 (check-expect (string-split "burn somethin', female dog.")
               (list "burn" "somethin'," "female" "dog."))
 
-;; string-split:
-;; string-split:
 (define (string-split str)
-  (map implode (break-list (explode str) #t)))
-
-
-(define (break-list los veryfirst?)
   (local (; String -> Boolean
           ; Returns true if str is not " " or "\t"
           (define (letter? str)
@@ -46,14 +40,23 @@
           ; [List-of String] -> [List-of String]
           ; Makes a word given a list of 1strings
           (define (make-word los)
-            (cond
-              [(empty? los) '()]
-              [else (if (letter? (first los))
-                        (cons (first los) (make-word (rest los)))
-                        '())])))
-    (cond [(empty? los) '()]
-          [else (if(and (letter? (first los)) veryfirst?)
-                   (cons (make-word  los) (break-list (rest los) #f))
-                    (if(and (> (length los) 1) (not (letter? (first los))) (letter? (second los)))
-                       (cons (make-word (rest los)) (break-list (rest los) #f))
-                           (break-list (rest los) #f)))])))
+            (cond [(empty? los) '()]
+                  [else (if (letter? (first los))
+                            (cons (first los) (make-word (rest los)))
+                            '())]))
+          ; [List-of X] N -> [List-of X]
+          ; Remove the first n items from l if possible or everything
+          (define (drop l n)
+            (cond [(zero? n) l]
+                  [(empty? l) l]
+                  [else (drop (rest l) (sub1 n))]))
+          ;; break-list: [List-of String] -> [List-of [List-of String]]
+          ;; break-list: Takes exploded string and breaks it into lists by word
+          (define (break-list los)
+            (local ((define after-word (drop los (length (make-word los)))))
+              (cond [(empty? los) '()]
+                    [else (if(letter? (first los))
+                             (cons (make-word  los) (break-list after-word))
+                             (break-list (rest los)))])))
+          (define lolos (break-list (explode str))))
+    (map implode lolos)))
