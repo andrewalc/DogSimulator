@@ -28,8 +28,6 @@
               (list "Hello" "to" "Ever" "yone"))
 (check-expect (string-split "  Hello     fj   \t\t\t to       Ever\tyone")
               (list "Hello" "fj" "to" "Ever" "yone"))
-(check-expect (string-split "burn somethin', female dog.")
-              (list "burn" "somethin'," "female" "dog."))
 
 (define (string-split str)
   (local (; String -> Boolean
@@ -60,3 +58,4 @@
                              (break-list (rest los)))])))
           (define lolos (break-list (explode str))))
     (map implode lolos)))
+;-------------------------------------------------------------------------------
