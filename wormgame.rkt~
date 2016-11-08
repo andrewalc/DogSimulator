@@ -38,13 +38,6 @@
 ;-------------------------------------------------------------------------------
 ; FUNCTIONS:
 ;-------------------------------------------------------------------------------
-;; worm-game: X -> Worm
-;; worm-game: Worm: a game based on the game Snake
-(define (worm-game x)
-  (big-bang init-worm
-            [to-draw render]
-            [on-key keypress]
-            [on-tick move .5]))
 
 ;; render: Worm -> Image
 ;; render: Renders a worm on the screen
@@ -84,4 +77,11 @@
            (make-worm (worm-size w) (make-posn x-pos y-pos) key)]
           [else w])))
 
+;; worm-game: X -> Worm
+;; worm-game: Worm: a game based on the game Snake
+(define (worm-game x)
+  (big-bang init-worm
+            [to-draw render]
+            [on-key keypress]
+            [on-tick move .5]))
 ;-------------------------------------------------------------------------------

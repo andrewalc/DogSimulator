@@ -112,11 +112,13 @@
                       (circle 30 "solid" "blue")
                       (rectangle 100 200 "solid" "red")))
 
-;; lpd*-builder: LPD* [Image Image -> Image] -> Image
+;; lpd*-builder: LPD* Beside or Above -> Image
 ;; lpd*-builder: Interprets the last two cases of a PD* using a given function
 
 (define (lpd*-builder lpd func)
-  (foldr func empty-image (map pd*-interpret lpd)))
+  (cond [(empty? lpd) empty-image]
+        [else (func (pd*-interpret (first lpd))
+                    (lpd*-builder (rest lpd) func))]))
 (check-expect (lpd*-builder '() above) empty-image)
 (check-expect (lpd*-builder '() beside) empty-image)
 (check-expect (lpd*-builder (cons pd2
