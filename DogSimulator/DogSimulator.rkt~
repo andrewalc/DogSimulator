@@ -21,7 +21,6 @@
    "Sleeping"
    "Idle"
    "Eating"
-   "at the vet"
    "Sitting"
    "Running"
    "Barking"
@@ -30,21 +29,18 @@
 ;;------------------------------------------------------------------------------
 ;; CONSTANTS:
 ;;------------------------------------------------------------------------------
-(define WIDTH 1280)
-(define HEIGHT 800)
-(define randvar 100)
+(define WIDTH 700)
+(define HEIGHT 400)
+(define randvar 4)
 (define maxhp 10)
 (define maxhunger 10)
 (define CANVAS (empty-scene WIDTH HEIGHT))
-(define HEIGHT-RATIO (/ 5 6))
-(define PIC-CANVAS (empty-scene WIDTH (* HEIGHT HEIGHT-RATIO)))
 
 ;;IMAGES
 (define d-sleeping (bitmap/file "resources/sleeping.png"))
 (define d-idle (bitmap/file "resources/idle.png"))
 (define d-dead (bitmap/file "resources/dead.png"))
 (define d-eating (bitmap/file "resources/eating.png"))
-(define d-vet (bitmap/file "resources/vet.jpg"))
 
 ;;------------------------------------------------------------------------------
 ;; FUNCTIONS:
@@ -56,12 +52,12 @@
 (define (DogSimulator age name)
   (big-bang (make-Dog age name "Sleeping" maxhp maxhunger)
             [on-key active]
-            [to-draw render]
-            [display-mode 'fullscreen]))
+            [to-draw render]))
 
 ;; render: Dog -> Image
 ;; render: Produces an Image of the Dog
-(define (render d) 
+(define (render d)
+  
   (local ((define age (Dog-age d))
           (define name (Dog-name d))
           (define state (Dog-state d))
@@ -69,12 +65,6 @@
           (define hunger (Dog-hunger d))
           (define Name-is-currently-State
             (string-append name " is currently " state))
-          ;; state-color-assc: State -> Color
-          ;; state-color-assc: Returns a Color string depending on the Dog's state
-          (define (state-color-assc s)
-            (cond
-              [(dead? s) "red"]
-              [else "black"]))
           (define hp/maxhp
             (string-append "HP: "
                            (number->string hp)
@@ -86,27 +76,35 @@
                            "/"
                            (number->string maxhunger ))))
     
-    (above (text "Welcome to Dog Simulator!" 35  "black" )
-           (above
-            (place-image (state-image d) (/ WIDTH 2) (/ (* HEIGHT HEIGHT-RATIO) 2) PIC-CANVAS)
-            (above (text Name-is-currently-State 25 (state-color-assc state))
-                   (beside
-                    (text hp/maxhp 25  "red" )
-                    (text "     " 25  "black")
-                    (text hg/maxhg 25  "blue" )))))))
+  (above (text "Welcome to Dog Simulator!" 35  "black" )
+         (above
+          (place-image (state-image d) (/ WIDTH 2) (/ HEIGHT 2) CANVAS)
+          (above (text Name-is-currently-State 25 (state-color-assc state))
+                (beside
+                 (text hp/maxhp 25  "red" )
+                 (text "     " 25  "black")
+                 (text hg/maxhg 25  "blue" )))))))
+
+
+;; state-color-assc: State -> Color
+;; state-color-assc: Returns a Color string depending on the Dog's state
+(define (state-color-assc s)
+  (cond
+    [(dead? s) "red"]
+    [else "black"]))
+
 
 ;; state-image: Dog -> Image
 ;; state-image: Uses a Dog's state to determine what image to return
 (define (state-image d)
   
-  (local ((define state (Dog-state d)))
-    
-    (cond
-      [(sleeping? state) d-sleeping]
-      [(idle? state) d-idle]
-      [(dead? state) d-dead]
-      [(eating? state) d-eating]
-      [(vet? state) d-vet])))
+ (local ((define state (Dog-state d)))
+   
+  (cond
+    [(sleeping? state) d-sleeping]
+    [(idle? state) d-idle]
+    [(dead? state) d-dead]
+    [(eating? state) d-eating])))
 
 ;; active: Dog -> Dog
 ;; active: Randomly selects the Dog's next State lower's the on keypress and
@@ -120,21 +118,20 @@
            (define hunger (Dog-hunger d))
            (define random-state (random-state-select (random randvar))))
     
-    (cond
-      [(and (<= hp 1) (not (sleeping? state)))
-       (make-Dog age name "Dead" 0 0)]
-      [(and (sleeping? state) (< hp maxhp) (>= hunger (/ maxhunger 2)))
-       (make-Dog age name random-state (add1 hp) hunger)]
-      [(and (idle? state) (> hunger 0))
-       (make-Dog age name random-state hp (sub1 hunger))]
-      [(and (eating? state) (< hunger maxhunger))
-       (make-Dog age name random-state hp (add1 hunger))]
-      [(vet? state)
-       (make-Dog age name random-state maxhp maxhunger)]
-      [(< hunger 1)
-       (make-Dog age name random-state (sub1 hp) hunger)]
-      [else
-       (make-Dog age name random-state hp hunger)])))
+  (cond
+  [(and (<= hp 1) (not (sleeping? state)))
+   (make-Dog age name "Dead" 0 0)]
+  [(and (sleeping? state) (< hp maxhp) (>= hunger (/ maxhunger 2)))
+   (make-Dog age name random-state (add1 hp) hunger)]
+  [(and (idle? state) (> hunger 0))
+   (make-Dog age name random-state hp (sub1 hunger))]
+  [(and (eating? state) (< hunger maxhunger))
+   (make-Dog age name random-state hp (add1 hunger))]
+  [(< hunger 1)
+   (make-Dog age name random-state (sub1 hp) hunger)]
+
+  [else
+   (make-Dog age name random-state hp hunger)])))
 
 
 ;; isState?: State State -> Boolean
@@ -151,18 +148,16 @@
 (define (eating? state)
   (isState? state "Eating"))
 
-(define (vet? state)
-  (isState? state "at the vet"))
-
 (define (dead? state)
   (isState? state "Dead"))
+
+
 
 ;; random-state-select: Number -> State
 ;; random-state-select: Selects a State given a random number.
 (define (random-state-select n)
   (cond
-    [(<= n 35) "Sleeping"]
-    [(and (> n 35) (<= n 75)) "Idle"]
-    [(and (> n 75) (<= n 90)) "Eating"]
-    [(> n 90) "at the vet"]))
+    [(or (= n 0) (= n 1)) "Sleeping"]
+    [(or (= n 2) (= n 4)) "Idle"]
+    [(= n 3) "Eating"]))
 
