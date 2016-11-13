@@ -22,6 +22,7 @@
    "Idle"
    "Eating"
    "at the vet"
+   "at war"
    "Sitting"
    "Running"
    "Barking"
@@ -45,6 +46,7 @@
 (define d-dead (bitmap/file "resources/dead.png"))
 (define d-eating (bitmap/file "resources/eating.png"))
 (define d-vet (bitmap/file "resources/vet.jpg"))
+(define d-atwar (bitmap/file "resources/atwar.jpg"))
 
 ;;------------------------------------------------------------------------------
 ;; FUNCTIONS:
@@ -106,7 +108,8 @@
       [(idle? state) d-idle]
       [(dead? state) d-dead]
       [(eating? state) d-eating]
-      [(vet? state) d-vet])))
+      [(vet? state) d-vet]
+      [(atwar? state) d-atwar])))
 
 ;; active: Dog -> Dog
 ;; active: Randomly selects the Dog's next State lower's the on keypress and
@@ -131,7 +134,9 @@
        (make-Dog age name random-state hp (add1 hunger))]
       [(vet? state)
        (make-Dog age name random-state maxhp maxhunger)]
-      [(< hunger 1)
+      [(atwar? state)
+       (make-Dog age name random-state (- hp 5) (- hunger 5))]
+       [(< hunger 1)
        (make-Dog age name random-state (sub1 hp) hunger)]
       [else
        (make-Dog age name random-state hp hunger)])))
@@ -154,6 +159,9 @@
 (define (vet? state)
   (isState? state "at the vet"))
 
+(define (atwar? state)
+  (isState? state "at war"))
+
 (define (dead? state)
   (isState? state "Dead"))
 
@@ -164,5 +172,7 @@
     [(<= n 35) "Sleeping"]
     [(and (> n 35) (<= n 75)) "Idle"]
     [(and (> n 75) (<= n 90)) "Eating"]
-    [(> n 90) "at the vet"]))
+    [(and (> n 90) (<= n 95)) "at the vet"]
+    [(> n 95) "at war"]))
+
 
