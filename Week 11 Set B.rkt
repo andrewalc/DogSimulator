@@ -1,9 +1,14 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname |Week 11 Set B|) (read-case-sensitive #t) (teachpacks ((lib "universe.rkt" "teachpack" "2htdp") (lib "image.rkt" "teachpack" "2htdp"))) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ((lib "universe.rkt" "teachpack" "2htdp") (lib "image.rkt" "teachpack" "2htdp")) #f)))
+; We did not wish to receive feedback.
+
 (require 2htdp/universe)
 (require 2htdp/image)
 (require string-sexpr)
+
+;;Andrew Alcala: alcala.a@husky.neu.edu
+;;Jeffrey Champion: champion.j@husky.neu.edu
 
 ;;PROBLEM SET 8C
 
@@ -59,6 +64,7 @@
 ;; – (list 'rectangle Number Number String String)
 ;; – (list 'beside LPD*)
 ;; – (list 'above LPD*)
+;;Interpretation: LPD* is a [List-of PD*]
 ;; Examples:
 (define pd1 'empty-image)
 (define pd2 "Shrimp")
@@ -66,9 +72,6 @@
 (define pd4 (list 'rectangle 100 200 "solid" "red"))
 (define pd5 (list 'above (list pd2 pd3)))
 (define pd6 (list 'beside (list pd5 pd2)))
-;;Data Def: An LPD* is one of: 
-;; – '()
-;; – (cons PD* LPD*)
 
 ;;Data Def: A Command is one of:
 ;; - String
@@ -135,7 +138,7 @@
 ;;Data Def: A list-of-chats (loc) is [List-of Chat]
 ;;Examples:
 (define LOC-1 empty)
-(define LOC-2 (list CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E))
+(define LOC-2 (list CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7))
 ;;Template:
 #;(define (loc-template loc)
     (cond
@@ -206,6 +209,7 @@
 
 (check-expect (show-cr CR-2)(place-image/align
  (above/align "left"
+  (beside(text "username: " FS "purple")(pd*-interpret pd5))
   (beside (text "champion.j+hoyt.j: " FS "purple")
           (text "whats " FS "purple")
           (bitmap/url URL-1)
@@ -225,12 +229,13 @@
               (above/align "left" (text "" FS "purple") empty-image))
 
 (define (assemble-cr cr)
-  (local[(define (ftge im1 im2) (above/align "left" im1 im2))
-         (define (ftge2 chatorstr) (chat-to-text chatorstr (cr-emotes cr)))]
-    (foldl ftge empty-image (map ftge2 (cr-convo cr)))))
+  (local[(define (above/align* im1 im2) (above/align "left" im1 im2))
+         (define (imagify chatorstr) (chat-to-text chatorstr (cr-emotes cr)))]
+    (foldl above/align* empty-image (map imagify (cr-convo cr)))))
 
 (check-expect (assemble-cr CR-2)
  (above/align "left"
+  (beside(text "username: " FS "purple")(pd*-interpret pd5))
   (beside (text "champion.j+hoyt.j: " FS "purple")
           (text "whats " FS "purple")
           (bitmap/url URL-1)
@@ -292,9 +297,8 @@
   (text "up " FS "purple")
   (bitmap/url URL-2)))
 
-;; pd*-interpret: PD* -> Image
-;; pd*-interpret: Consumes a PD* and produces the corresponding image
-
+;;Signature: PD* -> Image
+;;Purpose: Consumes a PD* and produces the corresponding image
 (check-expect (pd*-interpret pd1 ) empty-image)
 (check-expect (pd*-interpret pd2) (text "Shrimp" 12 "blue"))
 (check-expect (pd*-interpret pd3) (circle 30 "solid" "blue"))
@@ -329,13 +333,14 @@
                       (circle 30 "solid" "blue")
                       (rectangle 100 200 "solid" "red")))
 
-;; lpd*-builder: LPD* [Image Image -> Image] -> Image
-;; lpd*-builder: Interprets the last two cases of a PD* using a given function
+;;Signature: LPD* [Image Image -> Image] -> Image
+;;Purpose: Interprets the last two cases of a PD* using a given function
+(check-expect (lpd*-builder '() above) empty-image)
+(check-expect (lpd*-builder '() beside) empty-image)
 
 (define (lpd*-builder lpd func)
   (foldr func empty-image (map pd*-interpret lpd)))
-(check-expect (lpd*-builder '() above) empty-image)
-(check-expect (lpd*-builder '() beside) empty-image)
+
 (check-expect (lpd*-builder (cons pd2
                             (cons pd3
                             (cons pd4 '()))) above)
@@ -363,10 +368,10 @@
              (string=? "http:" (substring str 0 5))))
          ;Sig: String -> Image
          ;Purp: changes given string into corresponding image
-         (define (ftge s)
+         (define (make-image s)
            (if (url? s) (bitmap/url s)
             (text (string-append s " ") FS "purple")))]
-  (foldr beside empty-image (map ftge (replace-strings los loe)))))
+  (foldr beside empty-image (map make-image (replace-strings los loe)))))
 
 (check-expect (message-with-emotes(list "whats" "smile" "up" "wifi") LOE-2)
  (beside
@@ -418,26 +423,21 @@
 ;;adds the received chat to the current conversation in the chatroom.
 ;;If the chat is an emoticon command, the emote is added to the 
 ;;current list of emotes at the start of the list.
-(check-expect (receive-chat CR-1 CHAT-1)(make-cr (list "" CHAT-1) '()))
-(check-expect (receive-chat CR-1 CHAT-2)(make-cr (list "" CHAT-2) '()))
-(check-expect (receive-chat CR-1 CHAT-3)(make-cr (list "" CHAT-3) '()))
-(check-expect (receive-chat CR-1 CHAT-4)(make-cr (list "" CHAT-4) '()))
-(check-expect (receive-chat CR-1 CHAT-5)(make-cr (list "" CHAT-5)
-                                                 (list(list "word" URL-1))))
-(check-expect (receive-chat CR-1 CHAT-6)(make-cr (list "" CHAT-6) '()))
-(check-expect (receive-chat CR-2 CHAT-1)
- (make-cr(list "shrimp" CHAT-1 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)LOE-2))
-(check-expect (receive-chat CR-2 CHAT-2)
- (make-cr(list "shrimp" CHAT-2 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)LOE-2))
-(check-expect (receive-chat CR-2 CHAT-3)
- (make-cr(list "shrimp" CHAT-3 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)LOE-2))
-(check-expect (receive-chat CR-2 CHAT-4)
- (make-cr(list "shrimp" CHAT-4 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)LOE-2))
-(check-expect (receive-chat CR-2 CHAT-5)
- (make-cr(list "shrimp" CHAT-5 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)
+(check-expect (receive-chat CR-2 CHAT-1)(make-cr
+ (list "shrimp" CHAT-1 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2))
+(check-expect (receive-chat CR-2 CHAT-2)(make-cr
+ (list "shrimp" CHAT-2 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2))
+(check-expect (receive-chat CR-2 CHAT-3)(make-cr
+ (list "shrimp" CHAT-3 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2))
+(check-expect (receive-chat CR-2 CHAT-4)(make-cr
+ (list "shrimp" CHAT-4 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2))
+(check-expect (receive-chat CR-2 CHAT-5)(make-cr
+ (list "shrimp" CHAT-5 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)
          (list (list "word" URL-1) EMOTE-1 EMOTE-2)))
-(check-expect (receive-chat CR-2 CHAT-6)
- (make-cr(list "shrimp" CHAT-6 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)LOE-2))
+(check-expect (receive-chat CR-2 CHAT-6)(make-cr
+ (list "shrimp" CHAT-6 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2))
+(check-expect (receive-chat CR-2 CHAT-7)(make-cr
+  (list "shrimp" CHAT-7 CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2))
 
 (define (receive-chat cr chat)
   (if(string=? (first chat) "EMOTICON")
@@ -449,13 +449,14 @@
 ;;Signature: Chatroom KeyEvent -> Chatroom or Package
 ;;Purpose: changes the current chatroom based on the key input
 (check-expect (send-chat CR-2 "a")
- (make-cr(list "shrimpa" CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)LOE-2))
+ (make-cr(list"shrimpa" CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2))
 (check-expect (send-chat CR-2 "\b")
- (make-cr(list "shrim" CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E) LOE-2))
+ (make-cr(list "shrim" CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7) LOE-2))
 (check-expect (send-chat CR-2 "rshift")CR-2)
 (check-expect (send-chat CR-2 "\r")
- (make-package(make-cr (list "" CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E)LOE-2)
-              "shrimp"))
+ (make-package
+  (make-cr (list "" CHAT-1 CHAT-2 CHAT-3 CHAT-4 CHAT-5 CHAT-E CHAT-7)LOE-2)
+  "shrimp"))
 
 (define (send-chat cr key)
   (local[(define user-str (first (cr-convo cr)))]
@@ -477,7 +478,8 @@
 (check-expect (make-command "-Miguel")COMMAND-3)
 (check-expect (make-command "^shrimp")COMMAND-4)
 (check-expect (make-command "!family cup")COMMAND-5)
-;(check-expect (make-command "#(rectangle 20 40 \"solid\" \"blue\")")COMMAND-6)
+(check-expect (make-command
+               "#(above (\"Shrimp\" (circle 30 \"solid\" \"blue\")))")COMMAND-6)
 
 (define (make-command str)
   (local[;Sig: String String -> Boolean
@@ -496,6 +498,7 @@
     [(command? str "-")(cmd-type str "BLACKLIST")]
     [(command? str "^")(cmd-type str "WHITELIST")]
     [(command? str "!")(cons "URL" (words-to-list(second(cmd-type str ""))))]
+    [(command? str "#")(list "CODE" (string->sexpr (second (cmd-type str ""))))]
     [else str])))
 
 ;;Signature: String -> List-of-strings
