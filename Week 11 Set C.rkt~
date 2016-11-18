@@ -1,0 +1,32 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname |Week 11 Set C|) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+;; Andrew Alcala alcala.a@husky.neu.edu
+;; Problem Set 11 C
+
+
+
+; Number Number  [Number Number -> Number] -> Number
+;
+
+(define (n-before n ex edge)
+  (local[(define op (if(> edge n)+ -))]
+    (cond [(= edge (expt n (op ex 1))) ex]
+          [else (n-before n (op ex 1) edge)])))
+
+; Number -> Number
+; Given a Number x, returns the Number n such that (expt x (+ n 1))
+; approximates to infinity
+
+(check-expect (n-before-inf #i10.0) 308)
+
+(define (n-before-inf n)
+  (n-before n 0 #i+inf.0))
+
+; Number -> Number
+; Given a Number x, returns the Number n such that (expt x (- n 1))
+; approximates to zero
+(check-expect (n-before-zero #i10.0) -323)
+
+(define (n-before-zero n)
+  (n-before n 0 #i+0.0))
