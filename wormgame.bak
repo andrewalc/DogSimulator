@@ -51,13 +51,13 @@
 ;; render: Worm -> Image
 ;; render: Renders a worm on the screen
 (define (render w)
-  (local ((define (create-worm wm)
-            (local ((define w-tail         (worm-tail wm))
-                    (define x-pos          (posn-x (worm-pos wm)))
-                    (define y-pos          (posn-y (worm-pos wm)))
-                    (define w-dir          (worm-dir w)))
-              (place-image w-seg x-pos y-pos scene))))
-    (create-worm w)))
+  (local ((define w-tail         (worm-tail wm))
+          (define x-pos          (posn-x (worm-pos wm)))
+          (define y-pos          (posn-y (worm-pos wm)))
+          (define w-dir          (worm-dir w))
+          (define (create-worm wm)
+             (place-image w-seg x-pos y-pos scene))
+    (create-worm w))))
 
 ;; move: Worm -> Worm
 ;; move: Changes the worm's position everytick, depending on Worm's direction
